@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -33,14 +35,50 @@ public class MainActivity extends AppCompatActivity {
     // creating a variable for exoplayer
     SimpleExoPlayer exoPlayer;
 
+    public static boolean play = false;
+
+    Button playBtn;
+
     String videoURL = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
-    //String videoURL = "https://media.geeksforgeeks.org/wp-content/uploads/20201217163353/Screenrecorder-2020-12-17-16-32-03-350.mp4";
+//    String videoURL = "https://vjs.zencdn.net/v/oceans.mp4";//"https://media.geeksforgeeks.org/wp-content/uploads/20201217163353/Screenrecorder-2020-12-17-16-32-03-350.mp4";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         exoPlayerView = findViewById(R.id.idExoPlayerVIew);
+        playBtn = findViewById(R.id.playButton);
+
+        playBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // we are setting our exoplayer when it is ready.
+                if (!play) {
+                    play = true;
+                    exoPlayer.setPlayWhenReady(play);
+                    playBtn.setText("Pause");
+                } else {
+                    play = false;
+                    exoPlayer.setPlayWhenReady(play);
+                    playBtn.setText("Play");
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        initializePlayer();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        exoPlayer.setPlayWhenReady(true);
+    }
+
+    private void initializePlayer() {
         try {
 
             DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "ExoPlayer"));
@@ -48,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             // we are parsing a video url and parsing its video uri.
             Uri videouri = Uri.parse(videoURL);
 
-            DashMediaSource dashMediaSource = new DashMediaSource(videouri, dataSourceFactory,
+            DashMediaSource mediaSource = new DashMediaSource(videouri, dataSourceFactory,
                     new DefaultDashChunkSource.Factory(dataSourceFactory), null, null);
 
             // bandwisthmeter is used for getting default bandwidth
@@ -73,11 +111,7 @@ public class MainActivity extends AppCompatActivity {
             exoPlayerView.setPlayer(exoPlayer);
 
             // we are preparing our exoplayer with media source.
-            exoPlayer.prepare(dashMediaSource);
-
-            // we are setting our exoplayer when it is ready.
-            exoPlayer.setPlayWhenReady(true);
-
+            exoPlayer.prepare(mediaSource);
         } catch (Exception e) {
             // below line is used for handling our errors.
             Log.e("ExoPlayer", "Error : " + e.toString());
